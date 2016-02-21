@@ -1,4 +1,6 @@
 # escape
 Sivia's first escape game.
 
-Via [phaser.io](http://phaser.io).
+Links:
+* [phaser.io](http://phaser.io)
+* (http://www.photonstorm.com/phaser/advanced-phaser-and-typescript-projects)
