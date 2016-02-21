@@ -1,5 +1,5 @@
-# escape
-Sivia's first escape game.
+# Escape the Room
+Sivia's first escape the room game.
 
 Links:
 * http://phaser.io
