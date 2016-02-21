@@ -1,4 +1,4 @@
 # escape
 Sivia's first escape game.
 
-Via [url]phaser.io[/url].
+Via [phaser.io](http://phaser.io).
