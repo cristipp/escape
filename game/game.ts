@@ -4,9 +4,10 @@
 
 module Escape {
 
+    import Point = Phaser.Point;
     export class Game extends Phaser.Game {
         constructor() {
-            super(800, 600, Phaser.AUTO, 'content', null);
+            super(1024, 768, Phaser.AUTO, 'content', null);
 
             this.state.add('Boot', Boot, false);
             this.state.add('Preloader', Preloader, false);
@@ -50,8 +51,8 @@ module Escape {
             this.load.setPreloadSprite(this.preloadBar);
 
             //  Load our actual games assets
-            this.load.image('titlepage', 'assets/titlepage.jpg');
-            this.load.image('logo', 'assets/logo.png');
+            this.load.image('titlepage', 'assets/3706644444_c6daf9453a_b.jpg');
+            //this.load.image('logo', 'assets/logo.png');
             this.load.audio('music', 'assets/title.mp3', true);
             this.load.spritesheet('simon', 'assets/simon.png', 58, 96, 5);
             this.load.image('level1', 'assets/level1.png');
@@ -72,14 +73,56 @@ module Escape {
         logo: Phaser.Sprite;
 
         create() {
-            this.background = this.add.sprite(0, 0, 'titlepage');
+            this.background = this.add.sprite(
+                this.game.world.centerX,
+                this.game.world.centerY,
+                'titlepage');
             this.background.alpha = 0;
-            this.logo = this.add.sprite(this.world.centerX, -300, 'logo');
-            this.logo.anchor.setTo(0.5, 0.5);
+            this.background.anchor.set(0.5);
+
+            var menu = this.game.add.group();
+            menu.position = new Phaser.Point(
+                this.game.world.centerX,
+                this.game.world.centerY
+            );
+            var play = this.addButton("Play", this.startGame);
+            var newGame = this.addButton("New Game", this.startGame);
+            menu.add(play);
+            menu.add(newGame);
+            this.vstack([play, newGame], 10);
+
+            // this.vstack([play, newGame], 10);
+
             this.add.tween(this.background).to({ alpha: 1}, 2000, Phaser.Easing.Bounce.InOut, true);
-            this.add.tween(this.logo).to({ y: 220 }, 2000, Phaser.Easing.Elastic.Out, true, 2000);
-            //this.input.onDown.addOnce(this.fadeOut, this);
-            this.input.onDown.addOnce(this.startGame, this);
+            this.add.tween(play).to({ alpha: 1}, 2000, Phaser.Easing.Bounce.InOut, true);
+            this.add.tween(newGame).to({ alpha: 1}, 2000, Phaser.Easing.Bounce.InOut, true);
+        }
+
+        addButton(text: string, listener: Function) {
+            var button = this.game.add.text(
+                0,
+                0,
+                text,
+                { font: "65px Arial", fill: "#ff0044", align: "center" });
+            button.anchor.set(0.5, 0);
+            button.alpha = 0;
+            button.inputEnabled = true;
+            button.input.useHandCursor = true;
+            button.events.onInputDown.addOnce(listener, this);
+            return button
+        }
+
+        vstack(sprites: Phaser.Sprite[], spacing: number) {
+            var heights = sprites.map(s => s.height);
+            var height = heights.reduce((a, b) => a + b) + (sprites.length - 1) * spacing;
+            sprites.reduce(
+                (y, s) => {
+                    console.log(y);
+                    s.position = new Phaser.Point(s.position.x, y);
+                    return y + s.height + spacing
+                },
+                - height / 2
+            )
         }
 
         fadeOut() {

@@ -10,7 +10,7 @@ var Escape;
     var Game = (function (_super) {
         __extends(Game, _super);
         function Game() {
-            _super.call(this, 800, 600, Phaser.AUTO, 'content', null);
+            _super.call(this, 1024, 768, Phaser.AUTO, 'content', null);
             this.state.add('Boot', Boot, false);
             this.state.add('Preloader', Preloader, false);
             this.state.add('MainMenu', MainMenu, false);
@@ -54,8 +54,8 @@ var Escape;
             this.preloadBar = this.add.sprite(200, 250, 'preloadBar');
             this.load.setPreloadSprite(this.preloadBar);
             //  Load our actual games assets
-            this.load.image('titlepage', 'assets/titlepage.jpg');
-            this.load.image('logo', 'assets/logo.png');
+            this.load.image('titlepage', 'assets/3706644444_c6daf9453a_b.jpg');
+            //this.load.image('logo', 'assets/logo.png');
             this.load.audio('music', 'assets/title.mp3', true);
             this.load.spritesheet('simon', 'assets/simon.png', 58, 96, 5);
             this.load.image('level1', 'assets/level1.png');
@@ -76,14 +76,38 @@ var Escape;
             _super.apply(this, arguments);
         }
         MainMenu.prototype.create = function () {
-            this.background = this.add.sprite(0, 0, 'titlepage');
+            this.background = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'titlepage');
             this.background.alpha = 0;
-            this.logo = this.add.sprite(this.world.centerX, -300, 'logo');
-            this.logo.anchor.setTo(0.5, 0.5);
+            this.background.anchor.set(0.5);
+            var menu = this.game.add.group();
+            menu.position = new Phaser.Point(this.game.world.centerX, this.game.world.centerY);
+            var play = this.addButton("Play", this.startGame);
+            var newGame = this.addButton("New Game", this.startGame);
+            menu.add(play);
+            menu.add(newGame);
+            this.vstack([play, newGame], 10);
+            // this.vstack([play, newGame], 10);
             this.add.tween(this.background).to({ alpha: 1 }, 2000, Phaser.Easing.Bounce.InOut, true);
-            this.add.tween(this.logo).to({ y: 220 }, 2000, Phaser.Easing.Elastic.Out, true, 2000);
-            //this.input.onDown.addOnce(this.fadeOut, this);
-            this.input.onDown.addOnce(this.startGame, this);
+            this.add.tween(play).to({ alpha: 1 }, 2000, Phaser.Easing.Bounce.InOut, true);
+            this.add.tween(newGame).to({ alpha: 1 }, 2000, Phaser.Easing.Bounce.InOut, true);
+        };
+        MainMenu.prototype.addButton = function (text, listener) {
+            var button = this.game.add.text(0, 0, text, { font: "65px Arial", fill: "#ff0044", align: "center" });
+            button.anchor.set(0.5, 0);
+            button.alpha = 0;
+            button.inputEnabled = true;
+            button.input.useHandCursor = true;
+            button.events.onInputDown.addOnce(listener, this);
+            return button;
+        };
+        MainMenu.prototype.vstack = function (sprites, spacing) {
+            var heights = sprites.map(function (s) { return s.height; });
+            var height = heights.reduce(function (a, b) { return a + b; }) + (sprites.length - 1) * spacing;
+            sprites.reduce(function (y, s) {
+                console.log(y);
+                s.position = new Phaser.Point(s.position.x, y);
+                return y + s.height + spacing;
+            }, -height / 2);
         };
         MainMenu.prototype.fadeOut = function () {
             this.add.tween(this.background).to({ alpha: 0 }, 2000, Phaser.Easing.Linear.None, true);
