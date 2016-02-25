@@ -1,4 +1,5 @@
 /// <reference path="../lib/phaser.comments.d.ts" />
+/// <reference path="../lib/lib.es6.d.ts" />
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -14,7 +15,7 @@ var Escape;
             this.state.add('Boot', Boot, false);
             this.state.add('Preloader', Preloader, false);
             this.state.add('MainMenu', MainMenu, false);
-            this.state.add('Level1', Level1, false);
+            this.state.add('entrance', new Room(this.game, 'assets/1200px-Boca_Raton_Florida_private_beach_by_D_Ramey_Logan.jpg'), false);
             this.state.start('Boot');
         }
         return Game;
@@ -53,12 +54,7 @@ var Escape;
             //  Set-up our preloader sprite
             this.preloadBar = this.add.sprite(200, 250, 'preloadBar');
             this.load.setPreloadSprite(this.preloadBar);
-            //  Load our actual games assets
             this.load.image('titlepage', 'assets/3706644444_c6daf9453a_b.jpg');
-            //this.load.image('logo', 'assets/logo.png');
-            this.load.audio('music', 'assets/title.mp3', true);
-            this.load.spritesheet('simon', 'assets/simon.png', 58, 96, 5);
-            this.load.image('level1', 'assets/level1.png');
         };
         Preloader.prototype.create = function () {
             var tween = this.add.tween(this.preloadBar).to({ alpha: 0 }, 1000, Phaser.Easing.Linear.None, true);
@@ -104,7 +100,6 @@ var Escape;
             var heights = sprites.map(function (s) { return s.height; });
             var height = heights.reduce(function (a, b) { return a + b; }) + (sprites.length - 1) * spacing;
             sprites.reduce(function (y, s) {
-                console.log(y);
                 s.position = new Phaser.Point(s.position.x, y);
                 return y + s.height + spacing;
             }, -height / 2);
@@ -115,59 +110,46 @@ var Escape;
             tween.onComplete.add(this.startGame, this);
         };
         MainMenu.prototype.startGame = function () {
-            this.game.state.start('Level1', true, false);
+            this.game.state.start('entrance', true, false);
         };
         return MainMenu;
     })(Phaser.State);
     Escape.MainMenu = MainMenu;
-    var Level1 = (function (_super) {
-        __extends(Level1, _super);
-        function Level1() {
-            _super.apply(this, arguments);
+    var Direction;
+    (function (Direction) {
+        Direction[Direction["NORTH"] = 0] = "NORTH";
+        Direction[Direction["SOUTH"] = 1] = "SOUTH";
+        Direction[Direction["WEST"] = 2] = "WEST";
+        Direction[Direction["EAST"] = 3] = "EAST";
+    })(Direction || (Direction = {}));
+    var Navbar = (function (_super) {
+        __extends(Navbar, _super);
+        function Navbar(game, key, width, height) {
+            _super.call(this, game, key, width, height);
+            this.context.fillStyle = '#000077';
+            this.context.fillRect(0, 0, width, height);
         }
-        Level1.prototype.create = function () {
-            this.background = this.add.sprite(0, 0, 'level1');
-            //this.background = this.add.sprite(0, 0, 'simon');
-            //this.music = this.add.audio('music', 1, false);
-            //this.music.play();
-            this.player = new Player(this.game, 130, 284);
+        return Navbar;
+    })(Phaser.BitmapData);
+    Escape.Navbar = Navbar;
+    var Room = (function (_super) {
+        __extends(Room, _super);
+        function Room(game, path, neighbors) {
+            this.game = game;
+            this.path = path;
+            this.neighbors = neighbors;
+        }
+        Room.prototype.preload = function () {
+            this.load.image(this.key, this.path);
         };
-        return Level1;
+        Room.prototype.create = function () {
+            this.game.add.sprite(0, 0, this.key);
+            var bar = new Navbar(this.game, 'north', this.game.width, 30);
+            this.game.add.sprite(0, 0, bar);
+        };
+        return Room;
     })(Phaser.State);
-    Escape.Level1 = Level1;
-    var Player = (function (_super) {
-        __extends(Player, _super);
-        function Player(game, x, y) {
-            _super.call(this, game, x, y, 'simon', 0);
-            this.speed = 300;
-            this.anchor.setTo(0.5, 0);
-            this.animations.add('walk', [0, 1, 2, 3, 4], 10, true);
-            game.add.existing(this);
-            game.physics.enable(this);
-        }
-        Player.prototype.update = function () {
-            this.body.velocity.x = 0;
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-                this.body.velocity.x = -this.speed;
-                this.animations.play('walk');
-                if (this.scale.x == 1) {
-                    this.scale.x = -1;
-                }
-            }
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-                this.body.velocity.x = this.speed;
-                this.animations.play('walk');
-                if (this.scale.x == -1) {
-                    this.scale.x = 1;
-                }
-            }
-            else {
-                this.animations.frame = 0;
-            }
-        };
-        return Player;
-    })(Phaser.Sprite);
-    Escape.Player = Player;
+    Escape.Room = Room;
 })(Escape || (Escape = {}));
 window.onload = function () {
     var game = new Escape.Game();

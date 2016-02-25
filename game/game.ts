@@ -1,4 +1,5 @@
 /// <reference path="../lib/phaser.comments.d.ts" />
+/// <reference path="../lib/lib.es6.d.ts" />
 
 // http://www.photonstorm.com/phaser/advanced-phaser-and-typescript-projects
 
@@ -12,7 +13,10 @@ module Escape {
             this.state.add('Boot', Boot, false);
             this.state.add('Preloader', Preloader, false);
             this.state.add('MainMenu', MainMenu, false);
-            this.state.add('Level1', Level1, false);
+
+            this.state.add(
+                'entrance',
+                new Room(this.game, 'assets/1200px-Boca_Raton_Florida_private_beach_by_D_Ramey_Logan.jpg'), false);
 
             this.state.start('Boot');
         }
@@ -49,13 +53,7 @@ module Escape {
             //  Set-up our preloader sprite
             this.preloadBar = this.add.sprite(200, 250, 'preloadBar');
             this.load.setPreloadSprite(this.preloadBar);
-
-            //  Load our actual games assets
             this.load.image('titlepage', 'assets/3706644444_c6daf9453a_b.jpg');
-            //this.load.image('logo', 'assets/logo.png');
-            this.load.audio('music', 'assets/title.mp3', true);
-            this.load.spritesheet('simon', 'assets/simon.png', 58, 96, 5);
-            this.load.image('level1', 'assets/level1.png');
         }
 
         create() {
@@ -117,7 +115,6 @@ module Escape {
             var height = heights.reduce((a, b) => a + b) + (sprites.length - 1) * spacing;
             sprites.reduce(
                 (y, s) => {
-                    console.log(y);
                     s.position = new Phaser.Point(s.position.x, y);
                     return y + s.height + spacing
                 },
@@ -132,54 +129,45 @@ module Escape {
         }
 
         startGame() {
-            this.game.state.start('Level1', true, false);
+            this.game.state.start('entrance', true, false);
         }
     }
 
-    export class Level1 extends Phaser.State {
-        background: Phaser.Sprite;
-        music: Phaser.Sound;
-        player: Escape.Player;
+    enum Direction {
+        NORTH,
+        SOUTH,
+        WEST,
+        EAST
+    }
+
+    export class Navbar extends Phaser.BitmapData {
+        constructor(game, key, width, height) {
+            super(game, key, width, height);
+            this.context.fillStyle = '#000077';
+            this.context.fillRect(0,0, width, height);
+        }
+    }
+
+    export class Room extends Phaser.State {
+        game: Phaser.Game;
+        path: string;
+        neighbors: Map<Direction, Room>;
+
+        constructor(game: Phaser.Game, path: string, neighbors: Map<Direction, Room>) {
+            this.game = game;
+            this.path = path;
+            this.neighbors = neighbors;
+        }
+
+        preload() {
+            this.load.image(this.key, this.path);
+        }
+
 
         create() {
-            this.background = this.add.sprite(0, 0, 'level1');
-            //this.background = this.add.sprite(0, 0, 'simon');
-            //this.music = this.add.audio('music', 1, false);
-            //this.music.play();
-            this.player = new Player(this.game, 130, 284);
-        }
-    }
-
-    export class Player extends Phaser.Sprite {
-        speed: number = 300;
-
-        constructor(game: Phaser.Game, x: number, y: number) {
-            super(game, x, y, 'simon', 0);
-            this.anchor.setTo(0.5, 0);
-            this.animations.add('walk', [0, 1, 2, 3, 4], 10, true);
-            game.add.existing(this);
-            game.physics.enable(this)
-        }
-
-        update() {
-            this.body.velocity.x = 0;
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-                this.body.velocity.x = -this.speed;
-                this.animations.play('walk');
-                if (this.scale.x == 1) {
-                    this.scale.x = -1;
-                }
-            }
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-                this.body.velocity.x = this.speed;
-                this.animations.play('walk');
-                if (this.scale.x == -1) {
-                    this.scale.x = 1;
-                }
-            }
-            else {
-                this.animations.frame = 0;
-            }
+            this.game.add.sprite(0, 0, this.key);
+            var bar = new Navbar(this.game, 'north', this.game.width, 30);
+            this.game.add.sprite(0, 0, bar);
         }
     }
 }
