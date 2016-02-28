@@ -6,6 +6,7 @@
 module Escape {
 
     import Point = Phaser.Point;
+    import BitmapData = Phaser.BitmapData;
     export class Game extends Phaser.Game {
         constructor() {
             super(1024, 768, Phaser.AUTO, 'content', null);
@@ -16,8 +17,22 @@ module Escape {
 
             this.state.add(
                 'entrance',
-                new Room(this.game, 'assets/1200px-Boca_Raton_Florida_private_beach_by_D_Ramey_Logan.jpg'), false);
-
+                new Room(
+                    this.game,
+                    'assets/1200px-Boca_Raton_Florida_private_beach_by_D_Ramey_Logan.jpg',
+                    new Map([
+                        ['west', 'dunk']
+                    ])),
+                false);
+            this.state.add(
+                'dunk',
+                new Room(
+                    this.game,
+                    'assets/DUNK_-_Beachfront_Room_2nd_Floor_-_LowRes.JPG',
+                    new Map([
+                        ['east', 'entrance']
+                    ])),
+                false);
             this.state.start('Boot');
         }
     }
@@ -62,7 +77,8 @@ module Escape {
         }
 
         startMainMenu() {
-            this.game.state.start('MainMenu', true, false);
+            //this.game.state.start('MainMenu', true, false);
+            this.game.state.start('entrance', true, false);
         }
     }
 
@@ -133,27 +149,13 @@ module Escape {
         }
     }
 
-    enum Direction {
-        NORTH,
-        SOUTH,
-        WEST,
-        EAST
-    }
-
-    export class Navbar extends Phaser.BitmapData {
-        constructor(game, key, width, height) {
-            super(game, key, width, height);
-            this.context.fillStyle = '#000077';
-            this.context.fillRect(0,0, width, height);
-        }
-    }
-
     export class Room extends Phaser.State {
         game: Phaser.Game;
         path: string;
-        neighbors: Map<Direction, Room>;
+        neighbors: Map<string, string>;
+        navbarThickness = 30;
 
-        constructor(game: Phaser.Game, path: string, neighbors: Map<Direction, Room>) {
+        constructor(game: Phaser.Game, path: string, neighbors: Map<string, string>) {
             this.game = game;
             this.path = path;
             this.neighbors = neighbors;
@@ -165,9 +167,57 @@ module Escape {
 
 
         create() {
-            this.game.add.sprite(0, 0, this.key);
-            var bar = new Navbar(this.game, 'north', this.game.width, 30);
-            this.game.add.sprite(0, 0, bar);
+            background = this.game.add.sprite(this.world.centerX, this.world.centerY, this.key);
+            background.anchor.set(0.5);
+            this.neighbors.forEach((roomName, dir) => {
+                switch(dir) {
+                    case 'north':
+                        this.northNavbar(roomName);
+                        break;
+                    case 'east':
+                        this.eastNavbar(roomName);
+                        break;
+                    case 'south':
+                        this.southNavbar(roomName);
+                        break;
+                    case 'west':
+                        this.westNavbar(roomName);
+                        break;
+                    default:
+                        throw new Error("bad dir")
+                }
+            });
+
+            this.westNavbar('dunk');
+        }
+
+        northNavbar(roomName) {
+            this.navbar('north', 0, 0, this.game.width, this.navbarThickness, roomName);
+        }
+
+        eastNavbar(roomName) {
+            this.navbar('east', this.game.width - this.navbarThickness, 0, this.game.width, this.game.height, roomName);
+        }
+
+        southNavbar(roomName) {
+            this.navbar('south', 0, this.game.height - this.navbarThickness, this.game.width, this.game.height, roomName);
+        }
+
+        westNavbar(roomName) {
+            this.navbar('west', 0, 0, this.navbarThickness, this.game.height, roomName);
+        }
+
+        navbar(key, x, y, width, height, roomName) {
+            bitmap = this.game.add.bitmapData(width, height);
+            bitmap.context.fillStyle = '#000077';
+            bitmap.context.fillRect(0, 0, bitmap.width, bitmap.height);
+            bitmap.generateTexture(key);
+            return this.game.add.button(x, y, key, () => this.click(roomName), this, 1, 0, 2);
+        }
+
+        click(roomName) {
+            console.log(this.key, roomName);
+            this.game.state.start(roomName)
         }
     }
 }

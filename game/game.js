@@ -15,7 +15,12 @@ var Escape;
             this.state.add('Boot', Boot, false);
             this.state.add('Preloader', Preloader, false);
             this.state.add('MainMenu', MainMenu, false);
-            this.state.add('entrance', new Room(this.game, 'assets/1200px-Boca_Raton_Florida_private_beach_by_D_Ramey_Logan.jpg'), false);
+            this.state.add('entrance', new Room(this.game, 'assets/1200px-Boca_Raton_Florida_private_beach_by_D_Ramey_Logan.jpg', new Map([
+                ['west', 'dunk']
+            ])), false);
+            this.state.add('dunk', new Room(this.game, 'assets/DUNK_-_Beachfront_Room_2nd_Floor_-_LowRes.JPG', new Map([
+                ['east', 'entrance']
+            ])), false);
             this.state.start('Boot');
         }
         return Game;
@@ -61,7 +66,8 @@ var Escape;
             tween.onComplete.add(this.startMainMenu, this);
         };
         Preloader.prototype.startMainMenu = function () {
-            this.game.state.start('MainMenu', true, false);
+            //this.game.state.start('MainMenu', true, false);
+            this.game.state.start('entrance', true, false);
         };
         return Preloader;
     })(Phaser.State);
@@ -115,26 +121,10 @@ var Escape;
         return MainMenu;
     })(Phaser.State);
     Escape.MainMenu = MainMenu;
-    var Direction;
-    (function (Direction) {
-        Direction[Direction["NORTH"] = 0] = "NORTH";
-        Direction[Direction["SOUTH"] = 1] = "SOUTH";
-        Direction[Direction["WEST"] = 2] = "WEST";
-        Direction[Direction["EAST"] = 3] = "EAST";
-    })(Direction || (Direction = {}));
-    var Navbar = (function (_super) {
-        __extends(Navbar, _super);
-        function Navbar(game, key, width, height) {
-            _super.call(this, game, key, width, height);
-            this.context.fillStyle = '#000077';
-            this.context.fillRect(0, 0, width, height);
-        }
-        return Navbar;
-    })(Phaser.BitmapData);
-    Escape.Navbar = Navbar;
     var Room = (function (_super) {
         __extends(Room, _super);
         function Room(game, path, neighbors) {
+            this.navbarThickness = 30;
             this.game = game;
             this.path = path;
             this.neighbors = neighbors;
@@ -143,9 +133,52 @@ var Escape;
             this.load.image(this.key, this.path);
         };
         Room.prototype.create = function () {
-            this.game.add.sprite(0, 0, this.key);
-            var bar = new Navbar(this.game, 'north', this.game.width, 30);
-            this.game.add.sprite(0, 0, bar);
+            var _this = this;
+            background = this.game.add.sprite(this.world.centerX, this.world.centerY, this.key);
+            background.anchor.set(0.5);
+            this.neighbors.forEach(function (roomName, dir) {
+                switch (dir) {
+                    case 'north':
+                        _this.northNavbar(roomName);
+                        break;
+                    case 'east':
+                        _this.eastNavbar(roomName);
+                        break;
+                    case 'south':
+                        _this.southNavbar(roomName);
+                        break;
+                    case 'west':
+                        _this.westNavbar(roomName);
+                        break;
+                    default:
+                        throw new Error("bad dir");
+                }
+            });
+            this.westNavbar('dunk');
+        };
+        Room.prototype.northNavbar = function (roomName) {
+            this.navbar('north', 0, 0, this.game.width, this.navbarThickness, roomName);
+        };
+        Room.prototype.eastNavbar = function (roomName) {
+            this.navbar('east', this.game.width - this.navbarThickness, 0, this.game.width, this.game.height, roomName);
+        };
+        Room.prototype.southNavbar = function (roomName) {
+            this.navbar('south', 0, this.game.height - this.navbarThickness, this.game.width, this.game.height, roomName);
+        };
+        Room.prototype.westNavbar = function (roomName) {
+            this.navbar('west', 0, 0, this.navbarThickness, this.game.height, roomName);
+        };
+        Room.prototype.navbar = function (key, x, y, width, height, roomName) {
+            var _this = this;
+            bitmap = this.game.add.bitmapData(width, height);
+            bitmap.context.fillStyle = '#000077';
+            bitmap.context.fillRect(0, 0, bitmap.width, bitmap.height);
+            bitmap.generateTexture(key);
+            return this.game.add.button(x, y, key, function () { return _this.click(roomName); }, this, 1, 0, 2);
+        };
+        Room.prototype.click = function (roomName) {
+            console.log(this.key, roomName);
+            this.game.state.start(roomName);
         };
         return Room;
     })(Phaser.State);
